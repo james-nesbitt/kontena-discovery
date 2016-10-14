@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+####
+# Run PHP Composer in a devshell image
+#
+# @NOTE unlike other commands, this command does not just
+#   mount volumes from source, which allows this container
+#   to run without having docker-compose run.
+#
+#     $/> wundertools composer update
+#
+
+
+# COMPOSER_RUN_IN_PWD
+#
+# if == "YES" then composer is meant to be run as
+# a direct pass-through, as though running it in the current
+# path.  Otherwise it is meant to be run in the PATH_SOURCE
+#
+COMPOSER_RUN_IN_PWD="${COMPOSER_RUN_IN_PWD:-NO}"
+
+while [ $# -gt 0 ]
+do
+  case "$1" in
+  --pwd)
+    COMPOSER_RUN_IN_PWD="YES"
+    ;;
+  *)
+    break;
+  esac
+  shift
+done
+
+# Isolate arguments to pass to docker
+CONTAINER_ARGS="$@"
+
+# what host path is the target for composer (has composer.json)
+if [ "${COMPOSER_RUN_IN_PWD}" == "YES" ]; then
+    PATH_TARGET="${PATH_EXECUTION}"
+else
+    PATH_TARGET="${PATH_SOURCE}"
+fi
+
+# at what path in the container will we mount the composer target
+CONTAINER_PATH_TARGET="${CONTAINER_PATH_APP}/target"
+
+#echo ">>>>>DOCKER:COMPOSER START [CMD: ${CONTAINER_ARGS}]
+#"
+
+docker run --rm -t -i \
+    --name="${PROJECT}_composer" \
+    --hostname=${PROJECT} \
+    --volume="${PATH_TARGET}:${CONTAINER_PATH_TARGET}" \
+    --volume="${PATH_HOME}/.gitconfig:${CONTAINER_PATH_HOME}/.gitconfig" \
+    --volume="${PATH_HOME}/.ssh:${CONTAINER_PATH_HOME}/.ssh" \
+    -w="${CONTAINER_PATH_TARGET}" \
+    --entrypoint=composer \
+    ${DOCKER_IMAGE_DEVELOPERTOOL} \
+    --working-dir="${CONTAINER_PATH_TARGET}" \
+    ${CONTAINER_ARGS}
+
+#echo "
+#<<<<<DOCKER:COMPOSER END "

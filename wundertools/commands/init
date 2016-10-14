@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+###
+# Initialise a new Drupal 8 project.
+#
+# This command does the following:
+#   - Uses Composer to create a Drupal 8 project from drupal-composer/drupal-project.
+#   - Copies into place the default wundertools.settings.inc and compose-default.yml file.
+#
+
+# Overwrite some the source path settings
+SUBPATH_APP_SOURCE="app"
+PATH_SOURCE="${PATH_APP}/${SUBPATH_APP_SOURCE}"
+SUBPATH_APP_DATA="assets"
+PATH_SOURCE="${PATH_APP}/${SUBPATH_APP_ASSETS}"
+SUBPATH_APP_DATA="data"
+PATH_SOURCE="${PATH_APP}/${SUBPATH_APP_DATA}"
+
+printf "Initialising new Drupal 8 project (drupal-composer/drupal-project) in ${PATH_SOURCE} ...\n"
+
+# composer create-project of drupal in PATH_APP
+cd "${PATH_APP}"
+"${PATH_WUNDERTOOLS}/wundertools" composer --pwd create-project drupal-composer/drupal-project:8.x-dev "${SUBPATH_APP_SOURCE}" --stability dev --no-interaction
+
+printf "Initialising default settings...\n"
+
+# Copy the default settings to the project root (it is largely an empty template)
+echo "--> creating new settings file"
+cp "${PATH_WUNDERTOOLS}/${WUNDERTOOLS_SETTINGS_FILENAME}" "${PATH_APP}/${WUNDERTOOLS_SETTINGS_FILENAME}"
+# the only change we make to the settings is to tell wundertools that the source is at ./app
+echo "--> configuring settings file with new source path '${SUBPATH_APP_SOURCE}'"
+if [ $OS = "Darwin" ]
+then
+  sed -i .bak "s/^#SUBPATH_APP_SOURCE=\"\"/SUBPATH_APP_SOURCE=\"${SUBPATH_APP_SOURCE}\"/" "${PATH_APP}/${WUNDERTOOLS_SETTINGS_FILENAME}"
+  sed -i .bak "s/^#SUBPATH_APP_SETTINGS=\"\"/SUBPATH_APP_SETTINGS=\"${SUBPATH_APP_SETTINGS}\"/" "${PATH_APP}/${WUNDERTOOLS_SETTINGS_FILENAME}"
+  rm "${PATH_APP}/${WUNDERTOOLS_SETTINGS_FILENAME}.bak"
+else
+  sed -i "s/^#SUBPATH_APP_SOURCE=\"\"/SUBPATH_APP_SOURCE=\"${SUBPATH_APP_SOURCE}\"/" "${PATH_APP}/${WUNDERTOOLS_SETTINGS_FILENAME}"
+  sed -i "s/^#SUBPATH_APP_SETTINGS=\"\"/SUBPATH_APP_SETTINGS=\"${SUBPATH_APP_SETTINGS}\"/" "${PATH_APP}/${WUNDERTOOLS_SETTINGS_FILENAME}"
+fi
+
+# Initialise Drupal Console.
+if [ ! -d "${PATH_SOURCE}/console" ]; then
+  mkdir -p "${PATH_SOURCE}/console"
+fi
+# Create (can't use just `wundertools create` because it doesn't create the network) the containers since they are needed for `wundertools drupal init`.
+"${PATH_WUNDERTOOLS}/wundertools" up -d
+"${PATH_WUNDERTOOLS}/wundertools" stop
+# We use the non-desctuctive `drupal init` without --override flag to preserve any existing configuration.
+"${PATH_WUNDERTOOLS}/wundertools" drupal init
+
+
+## Make the assets stuff
+echo "--> making the assets paths"
+mkdir -p "${PATH_ASSETS}/files"
+mkdir -p "${PATH_ASSETS}/private"
+mkdir -p "${PATH_ASSETS}/backups"
+
+# Instructions
+echo "
+------ INIT COMPLETE ------------
+
+Drupal 8 has been built into the curent path, and
+a new wundertools.settings.inc file has been added
+which you can modify to alter your system.
+
+Wundertools now expects your source code to be in
+the /app path, next to the wundertools folder.
+
+If you have a custom docker-compose.yml file, you
+can add it the project root, next to the wundertools
+folder.  If you want to create one, you can start
+with the composer-default.yml file in the wundertools
+folder, but try to remove the shell variables from it.
+
+The initial composer actions have been run, so you
+should be able to get started using:
+
+    $/> wundertools up
+
+"

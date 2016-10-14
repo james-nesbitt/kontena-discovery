@@ -1,0 +1,9 @@
+
+####################################
+# IGNORING WUNDERTOOLS TEMP STUFF
+#
+
+#######################
+# IGNORING DRUPAL STUFF
+app
+app/*
