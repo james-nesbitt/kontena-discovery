@@ -1,0 +1,80 @@
+# WunderTools docker-compose
+#
+####
+# Source
+#
+source:
+  #image: quay.io/wunder/wunder-alpine-base
+  image: quay.io/wunder/internal-lv-kontena-source:master
+  command:
+    - /bin/true
+  volumes:
+    - "/app/web"
+    - "/app/vendor"
+    - "/app/config"
+z
+####
+# Assets
+#
+assets:
+    image: quay.io/wunder/wunder-alpine-base
+  command:
+    - /bin/true
+  volumes:
+    - "assets_files:/app/web/sites/default/files"
+    - "assets_private:/app/private"
+    - "backups:/app/backup"
+
+####
+# DB node
+#
+db:
+    image: quay.io/wunder/wundertools-image-fuzzy-mariadb
+    volumes:
+      - "dbdata:/var/lib/mysql"
+
+####
+# MemCacheD
+#
+memcache:
+  image: quay.io/wunder/alpine-memcached
+
+####
+# FPM node
+#
+
+fpm:
+  image: quay.io/wunder/wundertools-image-fuzzy-php
+  volumes_from:
+    - source:ro
+    - assets
+  links:
+    - db:db.app
+    - memcache:memcached.app
+
+####
+# WWW node
+#
+www:
+  image: quay.io/wunder/wundertools-image-fuzzy-nginx
+  volumes_from:
+    - source:ro
+    - assets:ro
+  links:
+    - fpm:fpm.app
+
+####
+# Static cache service
+#
+varnish:
+  image: quay.io/wunder/alpine-varnish
+  environment:
+    VARNISH_BACKEND_HOST: backend.app
+  links:
+    - www:backend.app
+
+volumes:
+  dbdata:
+  assets_files:
+  assets_private:
+  backups:

@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+echo " (In the future I will ask you questions to configure your site)"
+
+# @TODO
+# 1. loaded config.inc for default questions
+# 2. ask questions and save answers to vars
+# 3. write vars to config.inc file
+
+# Output current configuration
+echo "CURRENT CONFIGURATION:"
+echo "-- GENERAL"
+echo "--> PROJECT NAME ------: ${PROJECT}"
+echo "-- HOST PATHS"
+echo "--> HOME --------------: ${PATH_HOME}"
+echo "--> EXECUTION ---------: ${PATH_EXECUTION}"
+echo "--> WUNDERTOOLS -------: ${PATH_WUNDERTOOLS}"
+echo "--> APP ---------------: ${PATH_APP}"
+echo "--> SOURCE ------------: ${PATH_SOURCE}"
+echo "--> SETTINGS ----------: ${PATH_SETTINGS}"
+echo "--> WEBROOT -----------: ${PATH_WEBROOT}"
+echo "--> DATA --------------: ${PATH_DATA}"
+echo "--> ASSETS ------------: ${PATH_ASSETS}"
+echo "-- CONTAINER PATHS"
+echo "--> HOME --------------: ${CONTAINER_PATH_HOME}"
+echo "--> APP ---------------: ${CONTAINER_PATH_APP}"
+echo "--> SETTINGS ----------: ${CONTAINER_PATH_SETTINGS}"
+echo "--> SOURCE ------------: ${CONTAINER_PATH_SOURCE}"
+echo "--> WEBROOT -----------: ${CONTAINER_PATH_WEBROOT}"
+echo "--> VENDOR ------------: ${CONTAINER_PATH_VENDOR}"
+echo "-- SETTINGS SOURCES (OPTIONAL)"
+
+FOUND="NOT FOUND"; [ -f "$PATH_WUNDERTOOLS/${WUNDERTOOLS_SETTINGS_FILENAME}" ] && FOUND="FOUND"
+echo "--> DEFAULT -----------: ${FOUND} $PATH_WUNDERTOOLS/${WUNDERTOOLS_SETTINGS_FILENAME}"
+FOUND="NOT FOUND"; [ -f "$PATH_APP/${WUNDERTOOLS_SETTINGS_FILENAME}" ] && FOUND="FOUND"
+echo "--> APP ---------------: ${FOUND} $PATH_APP/${WUNDERTOOLS_SETTINGS_FILENAME}"
+
+echo "-- DOCKER-COMPOSE"
+echo "--> COMPOSE_FILE-------: ${COMPOSE_FILE}"
+echo "--> COMPOSE_NETWORK----: ${COMPOSE_NETWORK}"
+
+echo "-- TESTS"
+
+if [ ! -f "${PATH_SOURCE}/composer.json" ]; then
+  echo "--> composer.json ---: NOT FOUND [${PATH_SOURCE}/composer.json] : project composer instructions"
+fi
+
+if [ ! -f "${PATH_HOME}/.gitconfig" ]; then
+  echo "--> ~/.gitconfig ------: NOT FOUND [${PATH_HOME}/.gitconfig] : user global git settings"
+fi
+
+if [ ! -d "${PATH_SETTINGS}/drush" ]; then
+  echo "--> drush conf ------: NOT FOUND [${PATH_SETTINGS}/drush] : drush settings for your project"
+fi
+if [ ! -d "${PATH_SETTINGS}/console" ]; then
+  echo "--> console conf ------: NOT FOUND [${PATH_SETTINGS}/console] : drupal console settings for your project"
+fi
+
+if [ ! -f "${PATH_SOURCE}/vendor/bin/drupal" ]; then
+  echo "--> drupal-console ----: NOT FOUND [${PATH_SOURCE}/vendor/bin/drupal] : project specific drupal-console executable (from composer)"
+fi
+if [ ! -f "${PATH_SOURCE}/vendor/bin/drush" ]; then
+  echo "--> drush -------------: NOT FOUND [${PATH_SOURCE}/vendor/bin/drush] : project specific drush executable (from composer)"
+fi
+
+echo "DONE"
